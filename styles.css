@@ -16,7 +16,7 @@ body, html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #325c1c url('background.jpg') center center;
+    background: #325c1c url('background-b.png') center center;
     background-size: cover;
     background-repeat: no-repeat;
 }
@@ -24,8 +24,9 @@ body, html {
 /* Top left controls - compact and discreet */
 .controls-left {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     left: 20px;
+    z-index: 50;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 15px;
     padding: 20px;
@@ -118,12 +119,15 @@ body, html {
 /* Top right timer - large and visible */
 .timer-container {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.8);
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.7);
     border-radius: 20px;
-    padding: 30px 40px;
+    padding: 20px 20px;
     box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px); /* Adjust blur strength as needed */
+    -webkit-backdrop-filter: blur(10px); /* For Webkit browsers */
 }
 
 .timer-label {
@@ -144,7 +148,7 @@ body, html {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     border: 3px solid #4caf50;
     border-radius: 15px;
-    padding: 20px 30px;
+    padding: 10px 20px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(5px);
     min-width: 200px;
@@ -153,15 +157,16 @@ body, html {
 /* Center mascot - large and prominent */
 .mascot-container {
     position: absolute;
+    height: 50%;
     top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    z-index: 5;
+    z-index: 0;
 }
 
 .mascot {
-    width: 15rem;
+    
     text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
@@ -178,12 +183,12 @@ body, html {
 }
 
 .mascot-shadow {
-    width: 16rem;
+    position: relative;
+    width: 90%;
     height: 5rem;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 50%;
-    position: absolute;
-    top: 75%;
+    bottom: 13%;
     left: 50%;
     z-index: -1;
     transform: translateX(-50%);
@@ -205,30 +210,45 @@ body, html {
     top: 5%;
     left: 50%;
     z-index: 15;
-    transform: translateX(-50%);
+    transform: translateX(-20%);
     font-size: 2.5em;
     font-weight: bold;
     margin-top: 20px;
     padding: 20px 40px;
     border-radius: 25px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    background: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    max-width: 600px;
+    /* text-shadow: 1px 1px 2px rgba(0,0,0,0.1); */
+    max-width: 50%;
+}
+
+/* ::after creates the white triangle (the inner fill of the tail) */
+.message::after {
+    content: "";
+    position: absolute;
+    bottom: -49px; /* Position it slightly higher/smaller than ::before to create the outline effect */
+    left: 30%;
+    clip-path: polygon(0 0, 100% 0%, 0 100%);
+    width: 50px;
+    height: 50px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    z-index: 14; 
 }
 
 .message.quiet {
-    color: #2e7d32;
-    border: 3px solid #4caf50;
+    /* color: #2e7d32;
+    border: 3px solid #4caf50; */
+    opacity: 0;
 }
 
 .message.noisy {
-    color: #c62828;
-    border: 3px solid #f44336;
+    /* color: #c62828;
+    border: 3px solid #f44336; */
     /* animation: pulse 1s ease-in-out infinite; */
-    background: rgba(255, 235, 235, 0.95);
+    /* background: rgba(255, 235, 235, 0.95); */
 }
 
 @keyframes pulse {
@@ -250,9 +270,8 @@ body, html {
 /* Start button - bottom center */
 .start-button-container {
     position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 30px;
+    right: 30px;
 }
 
 .start-button {
@@ -260,7 +279,7 @@ body, html {
     color: white;
     border: none;
     padding: 20px 40px;
-    font-size: 1.5em;
+    font-size: 2rem;
     border-radius: 30px;
     cursor: pointer;
     font-weight: bold;

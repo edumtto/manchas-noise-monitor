@@ -18,13 +18,13 @@ class NoiseMonitor {
         this.timerDisplay = document.getElementById('timerDisplay');
         this.volumeBar = document.getElementById('volumeBar');
         
-        this.quietMessages = [
-            "😴 Zzz... So peaceful and quiet!",
-            "🌙 Sweet dreams in our quiet forest...",
-            "🍃 Perfect silence! Keep it up!",
-            "✨ Sleeping soundly in nature...",
-            "🦋 So calm and peaceful!"
-        ];
+        // this.quietMessages = [
+        //     "😴 Zzz... So peaceful and quiet!",
+        //     "🌙 Sweet dreams in our quiet forest...",
+        //     "🍃 Perfect silence! Keep it up!",
+        //     "✨ Sleeping soundly in nature...",
+        //     "🦋 So calm and peaceful!"
+        // ];
         
         this.noisyMessages = [
             "😱 Please, quiet! 🤫",
@@ -66,7 +66,7 @@ class NoiseMonitor {
             this.microphone.connect(this.analyzer);
             
             this.isMonitoring = true;
-            this.startButton.textContent = '⏹️ Stop Monitoring';
+            this.startButton.textContent = '⏹️';
             this.startButton.classList.add('stop');
             
             this.quietStartTime = Date.now();
@@ -83,7 +83,7 @@ class NoiseMonitor {
         if (this.audioContext) {
             this.audioContext.close();
         }
-        this.startButton.textContent = '▶️ Start Monitoring';
+        this.startButton.textContent = '▶️';
         this.startButton.classList.remove('stop');
         this.resetToQuiet();
     }
@@ -133,7 +133,7 @@ class NoiseMonitor {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
         this.fullscreenContainer.classList.remove('noisy');
-        this.message.textContent = this.getRandomMessage(this.quietMessages);
+        // this.message.textContent = this.getRandomMessage(this.quietMessages);
         this.message.className = 'message quiet';
         
         this.quietStartTime = Date.now();
@@ -143,7 +143,7 @@ class NoiseMonitor {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
         this.fullscreenContainer.classList.remove('noisy');
-        this.message.textContent = "Click 'Start Monitoring' to begin!";
+        this.message.textContent = "▶️";
         this.message.className = 'message quiet';
         this.volumeBar.style.width = '0%';
         this.totalQuietTime = 0;
