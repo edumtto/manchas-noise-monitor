@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Alan+Sans:wght@300..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="sleeping-animation.css">
     
 </head>
 <body>
@@ -18,9 +19,9 @@
                 <label class="control-label">🎤 Mic Sensitivity</label>
                 <div class="slider-container">
                     <span>Low</span>
-                    <input type="range" class="slider" id="sensitivitySlider" min="50" max="90" value="70">
+                    <input type="range" class="slider" id="sensitivitySlider" min="50" max="90" value="90">
                     <span>High</span>
-                    <div class="slider-value" id="sensitivityValue">70</div>
+                    <div class="slider-value" id="sensitivityValue">90</div>
                 </div>
             </div>
             
@@ -46,7 +47,16 @@
           <img class="mascot sleeping" id="mascot" src="sleeping.png" alt="Mascot"/>
           <div class="mascot-shadow"></div>
         </div>
-        
+
+        <div class="sleep-animation-container" id="sleepAnimation">
+          <div class="z-letter">Z</div>
+          <div class="z-letter">Z</div>
+          <div class="z-letter">Z</div>
+          <div class="z-letter">Z</div>
+          <div class="z-letter">Z</div>
+          <div class="z-letter">Z</div>
+        </div>
+
         <!-- Bottom Center Start Button -->
         <div class="start-button-container">
             <button class="start-button" id="startButton">▶️</button>

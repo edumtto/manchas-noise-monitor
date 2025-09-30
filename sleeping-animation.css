@@ -1,0 +1,75 @@
+.sleep-animation-container {
+  position: absolute;
+  top: 5%;
+  left: 55%;
+  /* transform: translate(-50%, -50%); */
+  width: 300px; /* Adjust as needed */
+  height: 300px; /* Adjust as needed */
+  /* background-color: rgba(0, 0, 0, 0.1); /* For visualization of the container */
+  overflow: hidden;
+  z-index: 1;
+}
+
+.sleep-animation-container.noisy {
+  display: none; /* Hide when noisy */
+}
+
+.z-letter {
+  position: absolute;
+  bottom: 0%;
+  left: 0%;
+  font-weight: bold;
+  color: white; /* Darker Z color */
+  opacity: 0;
+  text-shadow:black 0px 0px 3px; /* Glow effect */
+  animation: sleepZ 3s linear infinite; /* Animation duration and loop */
+}
+
+/* Different start positions and delays for multiple Zs */
+.z-letter:nth-child(1) {
+  font-size: 3rem;
+  animation-delay: 0s;
+}
+
+.z-letter:nth-child(2) {
+  font-size: 2rem;
+  animation-delay: .2s;
+  left: 70px;
+}
+
+.z-letter:nth-child(3) {
+  font-size: 2rem;
+  animation-delay: 1s;
+}
+
+.z-letter:nth-child(4) {
+  font-size: 1rem;
+  animation-delay: 1.2s;
+  left: 50px;
+}
+
+.z-letter:nth-child(5) {
+  font-size: 2rem;
+  animation-delay: 2s;
+}
+
+.z-letter:nth-child(6) {
+  font-size: 3rem;
+  animation-delay: 2.2s;
+  left: 50px;
+}
+
+@keyframes sleepZ {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(.5) rotate(-30deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(75px, -75px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(150px, -150px) scale(0.5); 
+  }
+}

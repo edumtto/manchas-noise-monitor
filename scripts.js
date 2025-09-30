@@ -13,6 +13,7 @@ class NoiseMonitor {
         this.sensitivity = 30;
         
         this.mascot = document.getElementById('mascot');
+        this.sleepAnimation = document.getElementById('sleepAnimation');
         this.fullscreenContainer = document.getElementById('fullscreenContainer');
         this.message = document.getElementById('message');
         this.startButton = document.getElementById('startButton');
@@ -118,7 +119,8 @@ class NoiseMonitor {
         this.mascot.attributes.scr
         this.fullscreenContainer.classList.add('noisy');
         this.message.textContent = this.getRandomMessage(this.noisyMessages);
-        this.message.className = 'message noisy';
+        this.message.className = 'message';
+        this.sleepAnimation.style.opacity = 0;
         
         // Reset timer when noise is detected
         this.totalQuietTime = 0;
@@ -132,6 +134,7 @@ class NoiseMonitor {
         this.fullscreenContainer.classList.remove('noisy');
         // this.message.textContent = this.getRandomMessage(this.quietMessages);
         this.message.className = 'message quiet';
+        this.sleepAnimation.style.opacity = 1;
         
         this.quietStartTime = Date.now();
         this.noiseStartTime = null;
@@ -143,6 +146,7 @@ class NoiseMonitor {
         this.fullscreenContainer.classList.remove('noisy');
         this.message.textContent = "▶️";
         this.message.className = 'message quiet';
+        this.sleepAnimation.style.opacity = 1;
         this.volumeBar.style.width = '0%';
         this.totalQuietTime = 0;
         this.quietStartTime = null;
