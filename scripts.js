@@ -1,3 +1,5 @@
+const NOISE_MESSAGE_DURATION = 4000; // 4 seconds
+
 class NoiseMonitor {
     constructor() {
         this.audioContext = null;
@@ -5,6 +7,7 @@ class NoiseMonitor {
         this.analyzer = null;
         this.isMonitoring = false;
         this.isQuiet = true;
+        this.noiseStartTime = null;
         this.quietStartTime = null;
         this.totalQuietTime = 0;
         this.sensitivity = 30;
@@ -18,21 +21,13 @@ class NoiseMonitor {
         this.timerDisplay = document.getElementById('timerDisplay');
         this.volumeBar = document.getElementById('volumeBar');
         
-        // this.quietMessages = [
-        //     "😴 Zzz... So peaceful and quiet!",
-        //     "🌙 Sweet dreams in our quiet forest...",
-        //     "🍃 Perfect silence! Keep it up!",
-        //     "✨ Sleeping soundly in nature...",
-        //     "🦋 So calm and peaceful!"
-        // ];
-        
         this.noisyMessages = [
-            "😱 Please, quiet! 🤫",
-            "🐻 Shhhh! You woke me up!",
-            "😴 Too noisy! Please whisper!",
-            "🌙 Let me sleep peacefully!",
-            "🤫 Quiet voices, please!",
-            "😮 Inside voices only!"
+            "Please, quiet!",
+            "Shhhh! You woke me up!",
+            "Too noisy! Please whisper!",
+            "Let me sleep peacefully!",
+            "Quiet voices, please!",
+            "Inside voices only!"
         ];
         
         this.setupEventListeners();
@@ -102,12 +97,13 @@ class NoiseMonitor {
         this.volumeBar.style.width = volumePercent + '%';
         
         // Check if noise level exceeds sensitivity threshold
-        const threshold = ((100 - this.sensitivity) / 100) * 100;
+        const threshold = 100 - this.sensitivity;
         const isCurrentlyNoisy = volumePercent > threshold;
-        
+        const noisyDuration = this.noiseStartTime ? (Date.now() - this.noiseStartTime) : 0;
+
         if (isCurrentlyNoisy && this.isQuiet) {
             this.setNoisy();
-        } else if (!isCurrentlyNoisy && !this.isQuiet) {
+        } else if (!isCurrentlyNoisy && !this.isQuiet && noisyDuration > NOISE_MESSAGE_DURATION) {
             this.setQuiet();
         }
         
@@ -127,6 +123,7 @@ class NoiseMonitor {
         // Reset timer when noise is detected
         this.totalQuietTime = 0;
         this.quietStartTime = null;
+        this.noiseStartTime = Date.now();
     }
     
     setQuiet() {
@@ -137,6 +134,7 @@ class NoiseMonitor {
         this.message.className = 'message quiet';
         
         this.quietStartTime = Date.now();
+        this.noiseStartTime = null;
     }
     
     resetToQuiet() {
@@ -148,6 +146,7 @@ class NoiseMonitor {
         this.volumeBar.style.width = '0%';
         this.totalQuietTime = 0;
         this.quietStartTime = null;
+        this.noiseStartTime = null;
     }
     
     getRandomMessage(messages) {
