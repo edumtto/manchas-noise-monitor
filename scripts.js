@@ -10,7 +10,7 @@ class NoiseMonitor {
         this.noiseStartTime = null;
         this.quietStartTime = null;
         this.totalQuietTime = 0;
-        this.sensitivity = 30;
+        this.sensitivity = 90;
         
         this.mascot = document.getElementById('mascot');
         this.sleepAnimation = document.getElementById('sleepAnimation');
@@ -67,6 +67,7 @@ class NoiseMonitor {
             
             this.quietStartTime = Date.now();
             this.monitorNoise();
+            this.sleepAnimation.style.opacity = 1;
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
@@ -146,7 +147,7 @@ class NoiseMonitor {
         this.fullscreenContainer.classList.remove('noisy');
         this.message.textContent = "▶️";
         this.message.className = 'message quiet';
-        this.sleepAnimation.style.opacity = 1;
+        this.sleepAnimation.style.opacity = 0;
         this.volumeBar.style.width = '0%';
         this.totalQuietTime = 0;
         this.quietStartTime = null;
