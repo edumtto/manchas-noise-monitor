@@ -62,8 +62,8 @@ class NoiseMonitor {
             this.microphone.connect(this.analyzer);
             
             this.isMonitoring = true;
-            this.startButton.textContent = '⏹️';
             this.startButton.classList.add('stop');
+            this.fullscreenContainer.classList.remove('ghost');
             
             this.quietStartTime = Date.now();
             this.monitorNoise();
@@ -80,8 +80,8 @@ class NoiseMonitor {
         if (this.audioContext) {
             this.audioContext.close();
         }
-        this.startButton.textContent = '▶️';
         this.startButton.classList.remove('stop');
+        this.fullscreenContainer.classList.add('ghost');
         this.resetToQuiet();
     }
     

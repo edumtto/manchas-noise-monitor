@@ -8,6 +8,11 @@ body, html {
     height: 100%;
     overflow: hidden;
     font-family: 'Alan Sans', cursive, sans-serif;
+    background-color: black;
+}
+
+.ghost {
+  opacity: 0.5;
 }
 
 .fullscreen-container {
@@ -27,13 +32,15 @@ body, html {
     bottom: 20px;
     left: 20px;
     z-index: 50;
-    background: rgba(255, 255, 255, 0.9);
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
     width: 300px;
     font-size: 0.9em;
+    color: #fff;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px); /* Adjust blur strength as needed */
+    -webkit-backdrop-filter: blur(10px); /* For Webkit browsers */
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .control-group {
@@ -48,7 +55,6 @@ body, html {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
-    color: #555;
     font-size: 0.9em;
 }
 
@@ -74,7 +80,7 @@ body, html {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #667eea;
+    background: #4caf50;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
@@ -83,7 +89,7 @@ body, html {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #667eea;
+    background: #4caf50;
     cursor: pointer;
     border: none;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -93,7 +99,7 @@ body, html {
     font-weight: bold;
     min-width: 30px;
     text-align: center;
-    background: #f0f0f0;
+    background: #4caf50;
     padding: 3px 8px;
     border-radius: 8px;
     font-size: 0.8em;
@@ -119,8 +125,8 @@ body, html {
 /* Top right timer - large and visible */
 .timer-container {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    top: 20px;
+    left: 20px;
     z-index: 50;
     background: rgba(0, 0, 0, 0.7);
     border-radius: 20px;
@@ -140,18 +146,19 @@ body, html {
 }
 
 .timer-display {
-    font-size: 4em;
+    font-size: 6rem;
+    font-family: 'Courier New', monospace;
     font-weight: bold;
     text-align: center;
     color: #4caf50;
-    font-family: 'Courier New', monospace;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    border: 3px solid #4caf50;
-    border-radius: 15px;
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
-    min-width: 200px;
+    /* font-family: 'Courier New', monospace; */
+    /* text-shadow: 2px 2px 4px rgba(0,0,0,0.5); */
+    /* border: 3px solid #4caf50; */
+    /* border-radius: 15px; */
+    /* padding: 10px 20px; */
+    /* background: rgba(255, 255, 255, 0.1); */
+    /* backdrop-filter: blur(5px); */
+    min-width: 300px;
 }
 
 /* Center mascot - large and prominent */
@@ -166,7 +173,6 @@ body, html {
 }
 
 .mascot {
-    
     text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
@@ -261,29 +267,63 @@ body, html {
 /* Start button - bottom center */
 .start-button-container {
     position: absolute;
-    top: 30px;
+    bottom: 30px;
     right: 30px;
 }
 
 .start-button {
     background: #4caf50;
     color: white;
-    border: none;
-    padding: 20px 40px;
-    font-size: 2rem;
-    border-radius: 30px;
+    border: solid 2px white;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
     cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 6px 20px rgba(252, 252, 252, 0.3);
     transition: all 0.3s ease;
-    font-family: inherit;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-    z-index: 10;
+    z-index: 100;
 }
+
+/* The play symbol is the default state */
+.start-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 55%; /* Slightly offset to look centered */
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    /* Create a triangle using borders */
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+    border-left: 30px solid white; /* The solid color side is the visible part */
+    transition: all 0.3s ease-in-out;
+    will-change: transform, border; /* Performance boost */
+}
+
+.start-button.stop::before {
+            /* 1. Reset border properties to create a square */
+            border-top: none;
+            border-bottom: none;
+            border-left: none;
+
+            /* 2. Give it a width, height, and background color */
+            width: 30px;
+            height: 30px;
+            background-color: white;
+
+            /* 3. Re-center it for the square shape */
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+
+            /* The transition from triangle to square is what makes it look good */
+        }
 
 .start-button:hover {
     background: #45a049;
-    transform: translateY(-3px);
+    /* transform: translateY(-3px); */
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
 }
 

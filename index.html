@@ -12,30 +12,10 @@
     
 </head>
 <body>
-    <div class="fullscreen-container" id="fullscreenContainer">
-        <!-- Top Left Controls -->
-        <div class="controls-left">
-            <div class="control-group">
-                <label class="control-label">🎤 Mic Sensitivity</label>
-                <div class="slider-container">
-                    <span>Low</span>
-                    <input type="range" class="slider" id="sensitivitySlider" min="50" max="90" value="90">
-                    <span>High</span>
-                    <div class="slider-value" id="sensitivityValue">90</div>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label class="control-label">📊 Volume Level</label>
-                <div class="volume-indicator">
-                    <div class="volume-bar" id="volumeBar"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Top Right Timer -->
+    <div class="fullscreen-container ghost" id="fullscreenContainer">
+        <!-- Timer -->
         <div class="timer-container">
-            <div class="timer-label">⏱️ Quiet Time</div>
+            <div class="timer-label">Quiet Time</div>
             <div class="timer-display" id="timerDisplay">00:00</div>
         </div>
 
@@ -56,11 +36,30 @@
           <div class="z-letter">Z</div>
           <div class="z-letter">Z</div>
         </div>
+    </div>
 
-        <!-- Bottom Center Start Button -->
-        <div class="start-button-container">
-            <button class="start-button" id="startButton">▶️</button>
+         <!-- Top Left Controls -->
+        <div class="controls-left">
+            <div class="control-group">
+                <label class="control-label">🎤 Mic Sensitivity</label>
+                <div class="slider-container">
+                    <span>Low</span>
+                    <input type="range" class="slider" id="sensitivitySlider" min="50" max="90" value="90">
+                    <span>High</span>
+                    <div class="slider-value" id="sensitivityValue">90</div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label">📊 Volume Level</label>
+                <div class="volume-indicator">
+                    <div class="volume-bar" id="volumeBar"></div>
+                </div>
+            </div>
         </div>
+    <!-- Start Button -->
+    <div class="start-button-container">
+        <button class="start-button" id="startButton"></button>
     </div>
 
     <script src="scripts.js"></script>
