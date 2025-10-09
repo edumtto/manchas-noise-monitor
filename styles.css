@@ -165,21 +165,24 @@ body, html {
 .mascot-container {
     position: absolute;
     height: 50%;
+    width: 50%;
     top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     z-index: 0;
+    background: url("sleeping.png") no-repeat center center;
 }
 
 .mascot {
     text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+    
 }
 
 .mascot.sleeping {
-    /* animation: sleep 3s ease-in-out infinite; */
+    animation: sleep 3s ease-in-out infinite;
 }
 
 .mascot.awake {
@@ -201,15 +204,16 @@ body, html {
     filter: blur(12px);
 }
 
-/* @keyframes sleep {
-    0%, 100% { transform: scale(1) rotate(-2deg); }
-    50% { transform: scale(1.05) rotate(2deg); }
+@keyframes sleep {
+    /* 0%, 100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.05) rotate(2deg); } */
+    0%, 100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes bounce {
     0%, 100% { transform: translateY(0) scale(1); }
     50% { transform: translateY(-20px) scale(1.1); }
-} */
+}
 
 .message {
     position: absolute;

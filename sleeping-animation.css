@@ -3,8 +3,8 @@
   top: 5%;
   left: 55%;
   /* transform: translate(-50%, -50%); */
-  width: 300px; /* Adjust as needed */
-  height: 300px; /* Adjust as needed */
+  width: 400px; 
+  height: 400px; 
   /* background-color: rgba(0, 0, 0, 0.1); /* For visualization of the container */
   overflow: hidden;
   z-index: 1;
@@ -63,14 +63,14 @@
 @keyframes sleepZ {
   0% {
     opacity: 1;
-    transform: translate(0, 0) scale(.5) rotate(-30deg);
+    transform: translate(0, 0) scale(1) rotate(-30deg);
   }
   50% {
     opacity: 1;
-    transform: translate(75px, -75px) scale(1);
+    transform: translate(75px, -75px) scale(1.4);
   }
   100% {
     opacity: 0;
-    transform: translate(150px, -150px) scale(0.5); 
+    transform: translate(150px, -150px) scale(01); 
   }
 }
