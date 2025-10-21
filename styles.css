@@ -21,7 +21,7 @@ body, html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #325c1c url('background-b.png') center center;
+    background: #325c1c url('background-c.svg') center center;
     background-size: cover;
     background-repeat: no-repeat;
 }
@@ -171,7 +171,7 @@ body, html {
     transform: translate(-50%, -50%);
     text-align: center;
     z-index: 0;
-    background: url("sleeping.png") no-repeat center center;
+    /* background: url("sleeping.png") no-repeat center center; */
 }
 
 .mascot {
@@ -193,11 +193,11 @@ body, html {
 
 .mascot-shadow {
     position: relative;
-    width: 90%;
+    width: 40%;
     height: 5rem;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 50%;
-    bottom: 13%;
+    bottom: 20%;
     left: 50%;
     z-index: -1;
     transform: translateX(-50%);
