@@ -14,8 +14,8 @@
 <body>
     <div class="fullscreen-container ghost" id="fullscreenContainer">
         <!-- Timer -->
-        <div class="timer-container">
-            <div class="timer-label">Quiet Time</div>
+        <div class="timer-container" id="timerContainer">
+            <div class="timer-label" id="timerLabel">Quiet Time</div>
             <div class="timer-display" id="timerDisplay">00:00</div>
         </div>
 
@@ -51,9 +51,57 @@
             </div>
             
             <div class="control-group">
-                <label class="control-label">📊 Volume Level</label>
-                <div class="volume-indicator">
-                    <div class="volume-bar" id="volumeBar"></div>
+                <label class="control-label">
+                    📊 Volume Level
+                    <span class="volume-status-dot green" id="volumeStatusDot"></span>
+                </label>
+                <div class="volume-meter" id="volumeMeter"></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">🎵 Background Music</label>
+                <div class="music-controls">
+                    <select class="track-select" id="trackSelect">
+                        <option value="">No music</option>
+                        <optgroup label="Lo-Fi Beats">
+                            <option value="lofi-1">Lo-Fi Chill</option>
+                            <option value="lofi-2">Lo-Fi Study Beats</option>
+                            <option value="lofi-3">Midnight Club</option>
+                        </optgroup>
+                        <optgroup label="Piano">
+                            <option value="piano-1">Soft Piano Reverie</option>
+                        </optgroup>
+                    </select>
+                    <button class="music-play-button" id="musicPlayButton" disabled aria-label="Play music">▶</button>
+                </div>
+                <div class="slider-container music-volume">
+                    <span>🔈</span>
+                    <input type="range" class="slider" id="musicVolumeSlider" min="0" max="100" value="40">
+                    <span>🔊</span>
+                </div>
+                <div class="music-status" id="musicStatus"></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">⏱️ Timer</label>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="timerVisibleToggle" checked>
+                        <span class="switch-slider"></span>
+                    </label>
+                    <span>Show timer</span>
+                </div>
+                <div class="toggle-row">
+                    <label class="switch">
+                        <input type="checkbox" id="timerModeToggle">
+                        <span class="switch-slider"></span>
+                    </label>
+                    <span id="timerModeLabel">Counting up</span>
+                </div>
+                <div class="slider-container countdown-duration" id="countdownDurationRow">
+                    <span>Set:</span>
+                    <input type="number" class="countdown-input" id="countdownMinutes" min="1" max="60" value="10">
+                    <span>min</span>
                 </div>
             </div>
         </div>

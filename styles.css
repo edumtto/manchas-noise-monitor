@@ -35,6 +35,8 @@ body, html {
     border-radius: 15px;
     padding: 20px;
     width: 300px;
+    max-height: 85vh;
+    overflow-y: auto;
     font-size: 0.9em;
     color: #fff;
     box-shadow: 0 6px 30px rgba(0,0,0,0.3);
@@ -105,21 +107,182 @@ body, html {
     font-size: 0.8em;
 }
 
-.volume-indicator {
+/* Traffic-light status dot next to the "Volume Level" label */
+.volume-status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px currentColor;
+    transition: background-color 0.2s ease;
+}
+
+.volume-status-dot.green  { background: #4caf50; color: #4caf50; }
+.volume-status-dot.yellow { background: #ffeb3b; color: #ffeb3b; }
+.volume-status-dot.red    { background: #f44336; color: #f44336; }
+
+/* Segmented noise-bar meter (equalizer style) */
+.volume-meter {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
     width: 100%;
-    height: 12px;
-    background: #e0e0e0;
-    border-radius: 6px;
-    overflow: hidden;
+    height: 32px;
     margin-top: 5px;
 }
 
-.volume-bar {
+.volume-seg {
+    flex: 1;
     height: 100%;
-    background: linear-gradient(90deg, #4caf50 0%, #ffeb3b 70%, #f44336 100%);
-    width: 0%;
-    transition: width 0.1s ease;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    transition: background-color 0.1s ease;
+}
+
+.volume-seg.active:nth-child(-n+7)  { background: #4caf50; }
+.volume-seg.active:nth-child(n+8):nth-child(-n+10) { background: #ffeb3b; }
+.volume-seg.active:nth-child(n+11) { background: #f44336; }
+
+/* Background music controls */
+.music-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.track-select {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 0.85em;
+    outline: none;
+}
+
+.track-select option,
+.track-select optgroup {
+    color: #000;
+}
+
+.music-play-button {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.music-play-button:hover:not(:disabled) {
+    background: #45a049;
+}
+
+.music-play-button.playing {
+    background: #f44336;
+}
+
+.music-play-button:disabled {
+    background: #777;
+    cursor: not-allowed;
+}
+
+.music-volume {
+    margin-top: 10px;
+}
+
+.music-status {
+    margin-top: 6px;
+    font-size: 0.75em;
+    opacity: 0.75;
+    min-height: 1em;
+}
+
+/* iOS-style toggle switches */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.toggle-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 22px;
+    transition: background-color 0.2s ease;
+}
+
+.switch-slider::before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.switch input:checked + .switch-slider {
+    background-color: #4caf50;
+}
+
+.switch input:checked + .switch-slider::before {
+    transform: translateX(16px);
+}
+
+.countdown-duration {
+    margin-top: 2px;
+}
+
+.countdown-duration.hidden {
+    display: none;
+}
+
+.countdown-input {
+    width: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 6px;
+    padding: 3px 6px;
+    text-align: center;
+    outline: none;
 }
 
 /* Top right timer - large and visible */
@@ -159,6 +322,15 @@ body, html {
     /* background: rgba(255, 255, 255, 0.1); */
     /* backdrop-filter: blur(5px); */
     min-width: 300px;
+}
+
+.timer-container.hidden {
+    display: none;
+}
+
+.timer-display.complete {
+    color: #ffd54f;
+    animation: pulse 1.2s ease-in-out infinite;
 }
 
 /* Center mascot - large and prominent */

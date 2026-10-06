@@ -1,4 +1,12 @@
 const NOISE_MESSAGE_DURATION = 4000; // 4 seconds
+const VOLUME_SEGMENT_COUNT = 12;
+
+const TRACKS = {
+    'lofi-1': { name: 'Lo-Fi Chill', src: 'music/lofi-study-chill.mp3' },
+    'lofi-2': { name: 'Lo-Fi Study Beats', src: 'music/lofi-study-beats.mp3' },
+    'lofi-3': { name: 'Midnight Club', src: 'music/alex-morgan-lofi-midnight-club-568164.mp3' },
+    'piano-1': { name: 'Soft Piano Reverie', src: 'music/piano-reverie.mp3' },
+};
 
 class NoiseMonitor {
     constructor() {
@@ -11,7 +19,15 @@ class NoiseMonitor {
         this.quietStartTime = null;
         this.totalQuietTime = 0;
         this.sensitivity = 90;
-        
+
+        this.timerMode = 'countup'; // 'countup' | 'countdown'
+        this.countdownDurationMs = 10 * 60 * 1000;
+
+        this.musicAudio = new Audio();
+        this.musicAudio.loop = true;
+        this.musicAudio.volume = 0.4;
+        this.isMusicPlaying = false;
+
         this.mascot = document.getElementById('mascot');
         this.sleepAnimation = document.getElementById('sleepAnimation');
         this.fullscreenContainer = document.getElementById('fullscreenContainer');
@@ -19,9 +35,21 @@ class NoiseMonitor {
         this.startButton = document.getElementById('startButton');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
+        this.timerContainer = document.getElementById('timerContainer');
+        this.timerLabel = document.getElementById('timerLabel');
         this.timerDisplay = document.getElementById('timerDisplay');
-        this.volumeBar = document.getElementById('volumeBar');
-        
+        this.volumeMeter = document.getElementById('volumeMeter');
+        this.volumeStatusDot = document.getElementById('volumeStatusDot');
+        this.trackSelect = document.getElementById('trackSelect');
+        this.musicPlayButton = document.getElementById('musicPlayButton');
+        this.musicVolumeSlider = document.getElementById('musicVolumeSlider');
+        this.musicStatus = document.getElementById('musicStatus');
+        this.timerVisibleToggle = document.getElementById('timerVisibleToggle');
+        this.timerModeToggle = document.getElementById('timerModeToggle');
+        this.timerModeLabel = document.getElementById('timerModeLabel');
+        this.countdownDurationRow = document.getElementById('countdownDurationRow');
+        this.countdownMinutes = document.getElementById('countdownMinutes');
+
         this.noisyMessages = [
             "Please, quiet!",
             "Shhhh! You woke me up!",
@@ -30,11 +58,23 @@ class NoiseMonitor {
             "Quiet voices, please!",
             "Inside voices only!"
         ];
-        
+
+        this.buildVolumeMeter();
         this.setupEventListeners();
+        this.updateCountdownDurationUI();
         this.updateTimer();
     }
-    
+
+    buildVolumeMeter() {
+        this.volumeSegments = [];
+        for (let i = 0; i < VOLUME_SEGMENT_COUNT; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'volume-seg';
+            this.volumeMeter.appendChild(seg);
+            this.volumeSegments.push(seg);
+        }
+    }
+
     setupEventListeners() {
         this.startButton.addEventListener('click', () => {
             if (this.isMonitoring) {
@@ -43,11 +83,96 @@ class NoiseMonitor {
                 this.startMonitoring();
             }
         });
-        
+
         this.sensitivitySlider.addEventListener('input', (e) => {
             this.sensitivity = parseInt(e.target.value);
             this.sensitivityValue.textContent = this.sensitivity;
         });
+
+        this.trackSelect.addEventListener('change', (e) => {
+            this.loadTrack(e.target.value);
+        });
+
+        this.musicPlayButton.addEventListener('click', () => {
+            this.toggleMusic();
+        });
+
+        this.musicVolumeSlider.addEventListener('input', (e) => {
+            this.musicAudio.volume = parseInt(e.target.value) / 100;
+        });
+
+        this.musicAudio.addEventListener('playing', () => {
+            this.isMusicPlaying = true;
+            this.musicPlayButton.classList.add('playing');
+            this.musicPlayButton.textContent = '⏸';
+            this.musicStatus.textContent = '';
+        });
+
+        this.musicAudio.addEventListener('pause', () => {
+            this.isMusicPlaying = false;
+            this.musicPlayButton.classList.remove('playing');
+            this.musicPlayButton.textContent = '▶';
+        });
+
+        this.musicAudio.addEventListener('error', () => {
+            this.isMusicPlaying = false;
+            this.musicPlayButton.classList.remove('playing');
+            this.musicPlayButton.textContent = '▶';
+            if (this.musicAudio.src) {
+                this.musicStatus.textContent = "Couldn't load that track — drop the matching file into /music.";
+            }
+        });
+
+        this.timerVisibleToggle.addEventListener('change', (e) => {
+            this.timerContainer.classList.toggle('hidden', !e.target.checked);
+        });
+
+        this.timerModeToggle.addEventListener('change', (e) => {
+            this.timerMode = e.target.checked ? 'countdown' : 'countup';
+            this.timerModeLabel.textContent = e.target.checked ? 'Counting down' : 'Counting up';
+            this.timerLabel.textContent = e.target.checked ? 'Time Left' : 'Quiet Time';
+            this.updateCountdownDurationUI();
+            this.updateTimer();
+        });
+
+        this.countdownMinutes.addEventListener('input', (e) => {
+            const minutes = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+            this.countdownDurationMs = minutes * 60 * 1000;
+            this.updateTimer();
+        });
+    }
+
+    loadTrack(trackId) {
+        const track = TRACKS[trackId];
+        this.musicStatus.textContent = '';
+
+        if (!track) {
+            this.musicAudio.pause();
+            this.musicAudio.removeAttribute('src');
+            this.musicPlayButton.disabled = true;
+            return;
+        }
+
+        this.musicPlayButton.disabled = false;
+        const wasPlaying = this.isMusicPlaying;
+        this.musicAudio.src = track.src;
+        if (wasPlaying) {
+            this.musicAudio.play().catch(() => {});
+        }
+    }
+
+    toggleMusic() {
+        if (!this.musicAudio.src) return;
+
+        if (this.musicAudio.paused) {
+            this.musicAudio.play().catch(() => {});
+        } else {
+            this.musicAudio.pause();
+        }
+    }
+
+    updateCountdownDurationUI() {
+        this.countdownDurationRow.classList.toggle('hidden', this.timerMode !== 'countdown');
     }
     
     async startMonitoring() {
@@ -94,14 +219,14 @@ class NoiseMonitor {
         // Calculate average volume
         const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
         const volumePercent = Math.min(100, (average / 255) * 100);
-        
-        // Update volume indicator
-        this.volumeBar.style.width = volumePercent + '%';
-        
+
         // Check if noise level exceeds sensitivity threshold
         const threshold = 100 - this.sensitivity;
         const isCurrentlyNoisy = volumePercent > threshold;
         const noisyDuration = this.noiseStartTime ? (Date.now() - this.noiseStartTime) : 0;
+
+        // Update volume meter + traffic-light status dot
+        this.renderVolumeMeter(volumePercent, threshold, isCurrentlyNoisy);
 
         if (isCurrentlyNoisy && this.isQuiet) {
             this.setNoisy();
@@ -113,6 +238,22 @@ class NoiseMonitor {
         requestAnimationFrame(() => this.monitorNoise());
     }
     
+    renderVolumeMeter(volumePercent, threshold, isCurrentlyNoisy) {
+        const activeCount = Math.round((volumePercent / 100) * VOLUME_SEGMENT_COUNT);
+        this.volumeSegments.forEach((seg, i) => {
+            seg.classList.toggle('active', i < activeCount);
+        });
+
+        let zone = 'green';
+        if (isCurrentlyNoisy) {
+            zone = 'red';
+        } else if (volumePercent > threshold * 0.7) {
+            zone = 'yellow';
+        }
+        this.volumeStatusDot.classList.remove('green', 'yellow', 'red');
+        this.volumeStatusDot.classList.add(zone);
+    }
+
     setNoisy() {
         this.isQuiet = false;
         // this.mascot.textContent = '😱';
@@ -148,7 +289,9 @@ class NoiseMonitor {
         this.message.textContent = "▶️";
         this.message.className = 'message quiet';
         this.sleepAnimation.style.opacity = 0;
-        this.volumeBar.style.width = '0%';
+        this.volumeSegments.forEach(seg => seg.classList.remove('active'));
+        this.volumeStatusDot.classList.remove('yellow', 'red');
+        this.volumeStatusDot.classList.add('green');
         this.totalQuietTime = 0;
         this.quietStartTime = null;
         this.noiseStartTime = null;
@@ -163,13 +306,21 @@ class NoiseMonitor {
         if (this.quietStartTime && this.isQuiet) {
             currentQuietTime = Date.now() - this.quietStartTime;
         }
-        
-        const minutes = Math.floor(currentQuietTime / 60000);
-        const seconds = Math.floor((currentQuietTime % 60000) / 1000);
-        
-        this.timerDisplay.textContent = 
+
+        let displayMs = currentQuietTime;
+        let isComplete = false;
+        if (this.timerMode === 'countdown') {
+            displayMs = Math.max(0, this.countdownDurationMs - currentQuietTime);
+            isComplete = currentQuietTime >= this.countdownDurationMs;
+        }
+
+        const minutes = Math.floor(displayMs / 60000);
+        const seconds = Math.floor((displayMs % 60000) / 1000);
+
+        this.timerDisplay.textContent =
             `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
+        this.timerDisplay.classList.toggle('complete', isComplete);
+
         if (this.isMonitoring) {
             setTimeout(() => this.updateTimer(), 1000);
         }
