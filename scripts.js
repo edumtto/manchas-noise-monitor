@@ -33,6 +33,8 @@ class NoiseMonitor {
         this.fullscreenContainer = document.getElementById('fullscreenContainer');
         this.message = document.getElementById('message');
         this.startButton = document.getElementById('startButton');
+        this.startButtonIcon = document.getElementById('startButtonIcon');
+        this.startButtonText = document.getElementById('startButtonText');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
         this.timerContainer = document.getElementById('timerContainer');
@@ -50,13 +52,20 @@ class NoiseMonitor {
         this.countdownDurationRow = document.getElementById('countdownDurationRow');
         this.countdownMinutes = document.getElementById('countdownMinutes');
 
+        // Controls toggle elements
+        this.controlsToggleBtn = document.getElementById('controlsToggleBtn');
+        this.controlsCloseBtn = document.getElementById('controlsCloseBtn');
+        this.controlsPanel = document.getElementById('controlsPanel');
+        this.fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+        this.fullscreenBtnText = document.getElementById('fullscreenBtnText');
+
         this.noisyMessages = [
-            "Please, quiet!",
-            "Shhhh! You woke me up!",
-            "Too noisy! Please whisper!",
-            "Let me sleep peacefully!",
-            "Quiet voices, please!",
-            "Inside voices only!"
+            "Please, quiet! 🤫",
+            "Shhhh! You woke me up! 🐾",
+            "Too noisy! Please whisper! 🔇",
+            "Let me sleep peacefully! 💤",
+            "Quiet voices, please! 🍃",
+            "Inside voices only! ✨"
         ];
 
         this.buildVolumeMeter();
@@ -67,6 +76,7 @@ class NoiseMonitor {
 
     buildVolumeMeter() {
         this.volumeSegments = [];
+        this.volumeMeter.innerHTML = '';
         for (let i = 0; i < VOLUME_SEGMENT_COUNT; i++) {
             const seg = document.createElement('div');
             seg.className = 'volume-seg';
@@ -76,6 +86,7 @@ class NoiseMonitor {
     }
 
     setupEventListeners() {
+        // Start / Stop monitoring
         this.startButton.addEventListener('click', () => {
             if (this.isMonitoring) {
                 this.stopMonitoring();
@@ -84,19 +95,83 @@ class NoiseMonitor {
             }
         });
 
+        // Controls drawer toggle & close
+        if (this.controlsToggleBtn) {
+            this.controlsToggleBtn.addEventListener('click', () => {
+                this.toggleControls();
+            });
+        }
+
+        if (this.controlsCloseBtn) {
+            this.controlsCloseBtn.addEventListener('click', () => {
+                this.closeControls();
+            });
+        }
+
+        // Close controls when clicking outside on the background canvas
+        document.addEventListener('click', (e) => {
+            if (!this.controlsPanel || this.controlsPanel.classList.contains('collapsed')) return;
+            const clickedInsidePanel = this.controlsPanel.contains(e.target);
+            const clickedToggle = this.controlsToggleBtn && this.controlsToggleBtn.contains(e.target);
+            if (!clickedInsidePanel && !clickedToggle) {
+                this.closeControls();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA');
+
+            if (e.key === 'Escape') {
+                this.closeControls();
+            } else if (!isInputFocused) {
+                if (e.key === 'c' || e.key === 'C' || e.key === 's' || e.key === 'S') {
+                    e.preventDefault();
+                    this.toggleControls();
+                } else if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (this.isMonitoring) {
+                        this.stopMonitoring();
+                    } else {
+                        this.startMonitoring();
+                    }
+                } else if (e.key === 'f' || e.key === 'F') {
+                    e.preventDefault();
+                    this.toggleFullscreen();
+                }
+            }
+        });
+
+        // Fullscreen toggle button
+        if (this.fullscreenToggleBtn) {
+            this.fullscreenToggleBtn.addEventListener('click', () => {
+                this.toggleFullscreen();
+            });
+            document.addEventListener('fullscreenchange', () => {
+                if (this.fullscreenBtnText) {
+                    this.fullscreenBtnText.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Toggle Fullscreen';
+                }
+            });
+        }
+
+        // Sensitivity slider
         this.sensitivitySlider.addEventListener('input', (e) => {
             this.sensitivity = parseInt(e.target.value);
             this.sensitivityValue.textContent = this.sensitivity;
         });
 
+        // Track selector
         this.trackSelect.addEventListener('change', (e) => {
             this.loadTrack(e.target.value);
         });
 
+        // Music play / pause
         this.musicPlayButton.addEventListener('click', () => {
             this.toggleMusic();
         });
 
+        // Music volume
         this.musicVolumeSlider.addEventListener('input', (e) => {
             this.musicAudio.volume = parseInt(e.target.value) / 100;
         });
@@ -119,14 +194,16 @@ class NoiseMonitor {
             this.musicPlayButton.classList.remove('playing');
             this.musicPlayButton.textContent = '▶';
             if (this.musicAudio.src) {
-                this.musicStatus.textContent = "Couldn't load that track — drop the matching file into /music.";
+                this.musicStatus.textContent = "Track unavailable in /music folder";
             }
         });
 
+        // Timer visibility toggle
         this.timerVisibleToggle.addEventListener('change', (e) => {
             this.timerContainer.classList.toggle('hidden', !e.target.checked);
         });
 
+        // Timer mode toggle (count up vs countdown)
         this.timerModeToggle.addEventListener('change', (e) => {
             this.timerMode = e.target.checked ? 'countdown' : 'countup';
             this.timerModeLabel.textContent = e.target.checked ? 'Counting down' : 'Counting up';
@@ -135,11 +212,49 @@ class NoiseMonitor {
             this.updateTimer();
         });
 
+        // Countdown duration input
         this.countdownMinutes.addEventListener('input', (e) => {
             const minutes = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
             this.countdownDurationMs = minutes * 60 * 1000;
             this.updateTimer();
         });
+    }
+
+    toggleControls() {
+        if (!this.controlsPanel) return;
+        const isCollapsed = this.controlsPanel.classList.toggle('collapsed');
+        if (this.controlsToggleBtn) {
+            this.controlsToggleBtn.classList.toggle('active', !isCollapsed);
+            this.controlsToggleBtn.setAttribute('aria-expanded', !isCollapsed);
+        }
+    }
+
+    closeControls() {
+        if (!this.controlsPanel) return;
+        this.controlsPanel.classList.add('collapsed');
+        if (this.controlsToggleBtn) {
+            this.controlsToggleBtn.classList.remove('active');
+            this.controlsToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    openControls() {
+        if (!this.controlsPanel) return;
+        this.controlsPanel.classList.remove('collapsed');
+        if (this.controlsToggleBtn) {
+            this.controlsToggleBtn.classList.add('active');
+            this.controlsToggleBtn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
     }
 
     loadTrack(trackId) {
@@ -188,6 +303,11 @@ class NoiseMonitor {
             
             this.isMonitoring = true;
             this.startButton.classList.add('stop');
+            if (this.startButtonIcon) {
+                this.startButtonIcon.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>`;
+            }
+            if (this.startButtonText) this.startButtonText.textContent = 'Stop';
+            this.startButton.setAttribute('aria-label', 'Stop Quiet Time');
             this.fullscreenContainer.classList.remove('ghost');
             
             this.quietStartTime = Date.now();
@@ -206,6 +326,11 @@ class NoiseMonitor {
             this.audioContext.close();
         }
         this.startButton.classList.remove('stop');
+        if (this.startButtonIcon) {
+            this.startButtonIcon.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>`;
+        }
+        if (this.startButtonText) this.startButtonText.textContent = 'Start';
+        this.startButton.setAttribute('aria-label', 'Start Quiet Time');
         this.fullscreenContainer.classList.add('ghost');
         this.resetToQuiet();
     }
@@ -256,9 +381,8 @@ class NoiseMonitor {
 
     setNoisy() {
         this.isQuiet = false;
-        // this.mascot.textContent = '😱';
         this.mascot.className = 'mascot awake';
-        this.mascot.attributes.scr
+        this.mascot.src = 'awakening.png';
         this.fullscreenContainer.classList.add('noisy');
         this.message.textContent = this.getRandomMessage(this.noisyMessages);
         this.message.className = 'message';
@@ -273,8 +397,8 @@ class NoiseMonitor {
     setQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
+        this.mascot.src = 'sleeping.png';
         this.fullscreenContainer.classList.remove('noisy');
-        // this.message.textContent = this.getRandomMessage(this.quietMessages);
         this.message.className = 'message quiet';
         this.sleepAnimation.style.opacity = 1;
         
@@ -285,8 +409,9 @@ class NoiseMonitor {
     resetToQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
+        this.mascot.src = 'sleeping.png';
         this.fullscreenContainer.classList.remove('noisy');
-        this.message.textContent = "▶️";
+        this.message.textContent = "Click 'Start' to begin!";
         this.message.className = 'message quiet';
         this.sleepAnimation.style.opacity = 0;
         this.volumeSegments.forEach(seg => seg.classList.remove('active'));
