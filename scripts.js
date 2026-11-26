@@ -8,6 +8,14 @@ const TRACKS = {
     'piano-1': { name: 'Soft Piano Reverie', src: 'music/piano-reverie.mp3' },
 };
 
+const BACKGROUNDS = {
+    'chalkboard': { name: 'Chalkboard', src: 'background-c.svg' },
+    'classroom': { name: 'Classroom', src: 'background-b.png' },
+    'forest': { name: 'Forest', src: 'background-a.jpg' },
+};
+const DEFAULT_BACKGROUND = 'chalkboard';
+const BACKGROUND_STORAGE_KEY = 'manchas-background';
+
 class NoiseMonitor {
     constructor() {
         this.audioContext = null;
@@ -51,6 +59,7 @@ class NoiseMonitor {
         this.timerModeLabel = document.getElementById('timerModeLabel');
         this.countdownDurationRow = document.getElementById('countdownDurationRow');
         this.countdownMinutes = document.getElementById('countdownMinutes');
+        this.backgroundOptions = document.getElementById('backgroundOptions');
 
         // Controls toggle elements
         this.controlsToggleBtn = document.getElementById('controlsToggleBtn');
@@ -69,6 +78,8 @@ class NoiseMonitor {
         ];
 
         this.buildVolumeMeter();
+        this.buildBackgroundOptions();
+        this.setBackground(this.loadSavedBackground());
         this.setupEventListeners();
         this.updateCountdownDurationUI();
         this.updateTimer();
@@ -83,6 +94,52 @@ class NoiseMonitor {
             this.volumeMeter.appendChild(seg);
             this.volumeSegments.push(seg);
         }
+    }
+
+    buildBackgroundOptions() {
+        this.backgroundButtons = {};
+        this.backgroundOptions.innerHTML = '';
+        Object.entries(BACKGROUNDS).forEach(([id, bg]) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'background-option';
+            btn.title = bg.name;
+            btn.setAttribute('aria-pressed', 'false');
+            btn.style.backgroundImage = `url('${bg.src}')`;
+
+            const label = document.createElement('span');
+            label.className = 'background-option-name';
+            label.textContent = bg.name;
+            btn.appendChild(label);
+
+            btn.addEventListener('click', () => this.setBackground(id));
+            this.backgroundOptions.appendChild(btn);
+            this.backgroundButtons[id] = btn;
+        });
+    }
+
+    loadSavedBackground() {
+        try {
+            const saved = localStorage.getItem(BACKGROUND_STORAGE_KEY);
+            if (saved && BACKGROUNDS[saved]) return saved;
+        } catch (e) {}
+        return DEFAULT_BACKGROUND;
+    }
+
+    setBackground(backgroundId) {
+        const bg = BACKGROUNDS[backgroundId];
+        if (!bg) return;
+
+        this.fullscreenContainer.style.backgroundImage = `url('${bg.src}')`;
+        Object.entries(this.backgroundButtons).forEach(([id, btn]) => {
+            const isSelected = id === backgroundId;
+            btn.classList.toggle('selected', isSelected);
+            btn.setAttribute('aria-pressed', isSelected);
+        });
+
+        try {
+            localStorage.setItem(BACKGROUND_STORAGE_KEY, backgroundId);
+        } catch (e) {}
     }
 
     setupEventListeners() {
