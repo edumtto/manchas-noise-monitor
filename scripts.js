@@ -10,7 +10,7 @@ const TRACKS = {
 
 const BACKGROUNDS = {
     'chalkboard': { name: 'Chalkboard', src: 'background-c.svg' },
-    'classroom': { name: 'Classroom', src: 'background-b.png' },
+    'classroom': { name: 'Classroom', src: 'background-b.png', scene3d: true },
     'forest': { name: 'Forest', src: 'background-a.jpg' },
 };
 const DEFAULT_BACKGROUND = 'chalkboard';
@@ -130,7 +130,15 @@ class NoiseMonitor {
         const bg = BACKGROUNDS[backgroundId];
         if (!bg) return;
 
+        // The flat image stays underneath as a placeholder/fallback for the 3D scene
         this.fullscreenContainer.style.backgroundImage = `url('${bg.src}')`;
+        if (window.Classroom3D) {
+            if (bg.scene3d) {
+                window.Classroom3D.start(this.fullscreenContainer);
+            } else {
+                window.Classroom3D.stop();
+            }
+        }
         Object.entries(this.backgroundButtons).forEach(([id, btn]) => {
             const isSelected = id === backgroundId;
             btn.classList.toggle('selected', isSelected);

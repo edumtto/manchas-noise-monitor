@@ -26,6 +26,21 @@ body, html {
     transition: filter 0.5s ease;
 }
 
+.scene-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+.scene-canvas.visible {
+    opacity: 1;
+}
+
 .fullscreen-container.ghost {
     /* Keep vibrant background while idle */
     opacity: 1;
