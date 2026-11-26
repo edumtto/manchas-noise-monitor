@@ -318,7 +318,7 @@
 
         // Baseboards
         const baseColor = toon(0xae794a);
-        box(scene, backW, 0.12, 0.04, baseColor, SPLIT_X + backW / 2, 0.06, 0.02);
+        box(scene, backW - 0.04, 0.12, 0.04, baseColor, SPLIT_X + 0.04 + (backW - 0.04) / 2, 0.06, 0.02);
         box(scene, leftW, 0.12, 0.04, baseColor, SPLIT_X - leftW / 2, 0.06, LEFT_DEPTH + 0.02);
         box(scene, 0.04, 0.12, LEFT_DEPTH, baseColor, SPLIT_X + 0.02, 0.06, LEFT_DEPTH / 2);
 
@@ -422,7 +422,7 @@
 
         // Bookshelf
         const shelf = new THREE.Group();
-        shelf.position.set(-2.15, 0, 0.22);
+        shelf.position.set(-2.15, 0, 0.25); // back sits just in front of the baseboard
         scene.add(shelf);
         const shelfWood = toon(0x9a6337);
         const sw = 1.25;
@@ -431,21 +431,27 @@
         box(shelf, 0.05, sh, sd, shelfWood, -sw / 2, sh / 2, 0);
         box(shelf, 0.05, sh, sd, shelfWood, sw / 2, sh / 2, 0);
         box(shelf, sw + 0.06, 0.05, sd + 0.02, shelfWood, 0, sh, 0);
-        box(shelf, sw, 0.06, sd, shelfWood, 0, 0.03, 0);
-        box(shelf, sw, 0.03, sd, shelfWood, 0, sh / 3 + 0.02, 0);
-        box(shelf, sw, 0.03, sd, shelfWood, 0, (2 * sh) / 3 + 0.01, 0);
-        box(shelf, sw, sh, 0.02, toon(0x6e4426), 0, sh / 2, -sd / 2 + 0.01, { outline: false });
+        // Inner boards fit between the side panels so no faces are coplanar (z-fighting)
+        const innerW = sw - 0.05;
+        box(shelf, innerW, 0.06, sd, shelfWood, 0, 0.03, 0);
+        box(shelf, innerW, 0.03, sd, shelfWood, 0, sh / 3 + 0.02, 0);
+        box(shelf, innerW, 0.03, sd, shelfWood, 0, (2 * sh) / 3 + 0.01, 0);
+        box(shelf, innerW, sh - 0.06, 0.02, toon(0x6e4426), 0, sh / 2, -sd / 2 + 0.01, { outline: false });
 
+        // Books fill each shelf up to `end`, staying clear of the boards and the props
         const bookColors = [0xd9534f, 0x3f7fd1, 0xf0c03a, 0x4fae5b, 0x8a56b8, 0xe9893c, 0x2f9c9a, 0xcf4f86];
-        const shelfLevels = [0.06, sh / 3 + 0.035, (2 * sh) / 3 + 0.025];
-        shelfLevels.forEach((baseY, level) => {
-            let x = -sw / 2 + 0.06;
-            const end = level === 1 ? sw / 2 - 0.42 : sw / 2 - 0.08;
-            while (x < end) {
+        const shelfLevels = [
+            { baseY: 0.06, clearance: 0.305, end: sw / 2 - 0.44 },
+            { baseY: sh / 3 + 0.035, clearance: 0.32, end: sw / 2 - 0.44 },
+            { baseY: (2 * sh) / 3 + 0.025, clearance: 0.31, end: sw / 2 - 0.035 },
+        ];
+        shelfLevels.forEach(({ baseY, clearance, end }, level) => {
+            let x = -sw / 2 + 0.035;
+            for (;;) {
                 const bwid = 0.045 + Math.random() * 0.035;
-                const bhgt = 0.22 + Math.random() * 0.09;
-                const book = box(shelf, bwid, bhgt, 0.26, bookColors[Math.floor(Math.random() * bookColors.length)], x + bwid / 2, baseY + bhgt / 2, 0.02);
-                if (Math.random() < 0.12) book.rotation.z = -0.15;
+                if (x + bwid > end) break;
+                const bhgt = Math.min(0.22 + Math.random() * 0.09, clearance - 0.02);
+                box(shelf, bwid, bhgt, 0.26, bookColors[Math.floor(Math.random() * bookColors.length)], x + bwid / 2, baseY + bhgt / 2 + 0.001, 0.02);
                 x += bwid + 0.006;
             }
             if (level === 0) {
@@ -462,7 +468,7 @@
 
         // Globe on the shelf
         const globeGroup = new THREE.Group();
-        globeGroup.position.set(-2.12, sh, 0.22);
+        globeGroup.position.set(-2.12, sh, 0.25);
         scene.add(globeGroup);
         addMesh(globeGroup, new THREE.CylinderGeometry(0.09, 0.11, 0.04, 20), toon(0x8a5a32), [0, 0.02, 0]);
         addMesh(globeGroup, new THREE.CylinderGeometry(0.015, 0.015, 0.1, 8), toon(0x8a5a32), [0, 0.08, 0], { outline: false });
@@ -512,9 +518,10 @@
         scene.add(chair);
         const chairWood = toon(0x8f5a31);
         box(chair, 0.5, 0.05, 0.46, chairWood, 0, 0.48, 0);
-        box(chair, 0.52, 0.3, 0.05, chairWood, 0, 1.12, -0.22);
-        box(chair, 0.05, 0.62, 0.05, chairWood, -0.22, 0.79, -0.22);
-        box(chair, 0.05, 0.62, 0.05, chairWood, 0.22, 0.79, -0.22);
+        // Backrest panel sits between the posts, which run up to its top edge
+        box(chair, 0.38, 0.3, 0.04, chairWood, 0, 1.12, -0.22);
+        box(chair, 0.05, 0.79, 0.05, chairWood, -0.22, 0.875, -0.22);
+        box(chair, 0.05, 0.79, 0.05, chairWood, 0.22, 0.875, -0.22);
         [[-0.22, 0.2], [0.22, 0.2], [-0.22, -0.2], [0.22, -0.2]].forEach(([x, z]) => box(chair, 0.05, 0.47, 0.05, chairWood, x, 0.235, z));
 
         // Rainbow rug
