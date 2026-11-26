@@ -4,6 +4,7 @@
 // (or if WebGL is unavailable) the flat PNG behind the canvas stays visible.
 (function () {
     const THREE_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    const CHALKBOARD_SRC = 'chalkboard.jpg';
     const OUTLINE_COLOR = 0x3a2a1f;
 
     let threeLoading = null;
@@ -126,175 +127,26 @@
         return tex;
     }
 
-    function chalkboardTexture() {
-        return canvasTexture(2048, 846, (ctx, w, h) => {
-            ctx.fillStyle = '#2f5b38';
-            ctx.fillRect(0, 0, w, h);
-
-            // Board grain
-            for (let i = 0; i < 2500; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.04)';
-                ctx.fillRect(Math.random() * w, Math.random() * h, 3 + Math.random() * 6, 2 + Math.random() * 4);
+    // Chalkboard art lives in chalkboard.jpg. Pages opened via file:// can't upload
+    // local images to WebGL, so the board stays plain green in that case.
+    function applyChalkboardTexture(material) {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const probe = document.createElement('canvas').getContext('2d');
+                probe.drawImage(img, 0, 0, 1, 1);
+                probe.getImageData(0, 0, 1, 1);
+            } catch (e) {
+                return;
             }
-
-            // Eraser smudge
-            ctx.save();
-            ctx.lineCap = 'round';
-            for (let i = 0; i < 70; i++) {
-                ctx.strokeStyle = `rgba(210, 230, 205, ${0.025 + Math.random() * 0.035})`;
-                ctx.lineWidth = 30 + Math.random() * 60;
-                const x0 = 250 + Math.random() * 600;
-                const y0 = 330 + Math.random() * 260;
-                ctx.beginPath();
-                ctx.moveTo(x0, y0);
-                ctx.quadraticCurveTo(x0 + 300, y0 - 140 + Math.random() * 60, x0 + 500 + Math.random() * 300, y0 - 180 - Math.random() * 60);
-                ctx.stroke();
-            }
-            ctx.restore();
-
-            const vignette = ctx.createRadialGradient(w / 2, h / 2, h * 0.4, w / 2, h / 2, w * 0.6);
-            vignette.addColorStop(0, 'rgba(0,0,0,0)');
-            vignette.addColorStop(1, 'rgba(0,0,0,0.22)');
-            ctx.fillStyle = vignette;
-            ctx.fillRect(0, 0, w, h);
-
-            const chalk = (color, width) => {
-                ctx.strokeStyle = color;
-                ctx.fillStyle = color;
-                ctx.lineWidth = width || 6;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-            };
-
-            // Title
-            chalk('#eef2e6');
-            ctx.font = '500 104px "Alan Sans", "Trebuchet MS", sans-serif';
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillText('Manchas', 95, 180);
-            drawPaw(ctx, 620, 140, 1.15);
-
-            // ABC
-            ctx.save();
-            ctx.translate(1580, 330);
-            ctx.rotate(-0.16);
-            chalk('#cbe98c');
-            ctx.font = '500 96px "Alan Sans", "Trebuchet MS", sans-serif';
-            ctx.lineWidth = 3;
-            ctx.strokeText('ABC', 0, 0);
-            ctx.restore();
-
-            // Apple
-            chalk('#f29a8e', 6);
-            ctx.beginPath();
-            ctx.moveTo(1830, 160);
-            ctx.bezierCurveTo(1760, 130, 1730, 240, 1790, 290);
-            ctx.bezierCurveTo(1810, 305, 1825, 295, 1830, 290);
-            ctx.bezierCurveTo(1835, 295, 1850, 305, 1870, 290);
-            ctx.bezierCurveTo(1930, 240, 1900, 130, 1830, 160);
-            ctx.stroke();
-            chalk('#9fdc84', 6);
-            ctx.beginPath();
-            ctx.ellipse(1855, 128, 26, 12, -0.5, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Chalk sticks doodle
-            chalk('#a6d3f3', 6);
-            ctx.save();
-            ctx.translate(1640, 450);
-            ctx.rotate(-1.1);
-            ctx.strokeRect(-55, -14, 110, 28);
-            ctx.restore();
-            ctx.save();
-            ctx.translate(1780, 420);
-            ctx.rotate(0.35);
-            ctx.strokeRect(-40, -12, 80, 24);
-            ctx.restore();
-
-            // Stars
-            chalk('#f3a7a2', 6);
-            drawStar(ctx, 1110, 540, 50, 22);
-            chalk('#a7e59c', 6);
-            drawStar(ctx, 1355, 520, 54, 24);
-
-            // Spirals
-            chalk('#f2d47e', 6);
-            drawSpiral(ctx, 1810, 620, 58);
-            drawSpiral(ctx, 1290, 720, 50);
-
-            // Sun doodle
-            chalk('#e8e8dc', 5);
-            ctx.beginPath();
-            ctx.arc(1660, 640, 34, 0, Math.PI * 2);
-            ctx.stroke();
-            for (let i = 0; i < 9; i++) {
-                const a = (i / 9) * Math.PI * 2;
-                ctx.beginPath();
-                ctx.moveTo(1660 + Math.cos(a) * 46, 640 + Math.sin(a) * 46);
-                ctx.lineTo(1660 + Math.cos(a) * 64, 640 + Math.sin(a) * 64);
-                ctx.stroke();
-            }
-
-            // Comet swirl
-            chalk('#e7ece0', 6);
-            ctx.beginPath();
-            ctx.arc(1120, 720, 28, 0, Math.PI * 1.8);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(1140, 700);
-            ctx.quadraticCurveTo(1200, 660, 1290, 650);
-            ctx.moveTo(1145, 718);
-            ctx.quadraticCurveTo(1210, 690, 1280, 690);
-            ctx.stroke();
-
-            // 123*
-            chalk('#b2d8f5');
-            ctx.font = '500 92px "Alan Sans", "Trebuchet MS", sans-serif';
-            ctx.lineWidth = 3;
-            ctx.strokeText('123', 1530, 800);
-            ctx.font = '500 56px "Alan Sans", "Trebuchet MS", sans-serif';
-            ctx.strokeText('*', 1715, 750);
-
-            // Chalk dust breakup over the drawings
-            for (let i = 0; i < 9000; i++) {
-                ctx.fillStyle = 'rgba(47, 91, 56, 0.35)';
-                ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
-            }
-        });
-    }
-
-    function drawStar(ctx, cx, cy, outer, inner) {
-        ctx.beginPath();
-        for (let i = 0; i < 10; i++) {
-            const r = i % 2 === 0 ? outer : inner;
-            const a = -Math.PI / 2 + (i * Math.PI) / 5;
-            ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-        }
-        ctx.closePath();
-        ctx.stroke();
-    }
-
-    function drawSpiral(ctx, cx, cy, radius) {
-        ctx.beginPath();
-        for (let t = 0; t < Math.PI * 6; t += 0.1) {
-            const r = (t / (Math.PI * 6)) * radius;
-            ctx.lineTo(cx + Math.cos(t) * r, cy + Math.sin(t) * r);
-        }
-        ctx.stroke();
-    }
-
-    function drawPaw(ctx, cx, cy, scale) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(scale, scale);
-        ctx.beginPath();
-        ctx.ellipse(0, 10, 22, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
-        [[-26, -14], [-9, -28], [11, -28], [27, -14]].forEach(([x, y]) => {
-            ctx.beginPath();
-            ctx.ellipse(x, y, 8, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        ctx.restore();
+            const tex = new THREE.Texture(img);
+            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            tex.needsUpdate = true;
+            material.map = tex;
+            material.color.set(0xffffff);
+            material.needsUpdate = true;
+        };
+        img.src = CHALKBOARD_SRC;
     }
 
     function rugTexture() {
@@ -527,8 +379,9 @@
         const bw = 4.8;
         const bh = 2.05;
         box(board, bw, bh, 0.08, wood, 0, 0, 0.04);
-        const boardTex = chalkboardTexture();
-        const boardFace = new THREE.Mesh(new THREE.PlaneGeometry(bw - 0.2, bh - 0.2), new THREE.MeshLambertMaterial({ map: boardTex }));
+        const boardMaterial = new THREE.MeshLambertMaterial({ color: 0x2f5b38 });
+        applyChalkboardTexture(boardMaterial);
+        const boardFace = new THREE.Mesh(new THREE.PlaneGeometry(bw - 0.2, bh - 0.2), boardMaterial);
         boardFace.position.z = 0.085;
         boardFace.receiveShadow = true;
         board.add(boardFace);
@@ -790,10 +643,6 @@
         active = true;
         try {
             await loadThree();
-            // Chalkboard lettering uses the page font
-            if (document.fonts && document.fonts.load) {
-                await document.fonts.load('500 100px "Alan Sans"').catch(() => {});
-            }
             if (!active) return;
             if (!renderer) init(container);
         } catch (e) {
