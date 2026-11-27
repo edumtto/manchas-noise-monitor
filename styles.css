@@ -77,14 +77,35 @@ body, html {
     user-select: none;
 }
 
+.mascot-figure {
+    --mascot-waist: 64%; /* bottom of the shirt, as a share of the pose image's height */
+    position: relative;
+    filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
+}
+
+/* Upper body: everything above the waist, stretching up from the waist line */
 .mascot {
+    display: block;
     max-height: 54vh;
     max-width: min(80vw, 540px);
     width: auto;
     height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
+    clip-path: inset(0 0 calc(100% - var(--mascot-waist)) 0);
+    transform-origin: 50% var(--mascot-waist);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Legs and hands: the same image below the waist, never moving. It starts 2px
+   higher to overlap the upper body, so no hairline shows at the join. */
+.mascot-legs {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    clip-path: inset(calc(var(--mascot-waist) - 2px) 0 0 0);
+    pointer-events: none;
 }
 
 .mascot.sleeping {
@@ -103,33 +124,23 @@ body, html {
     filter: blur(12px);
     margin-top: -14px;
     z-index: -1;
-    animation: shadowPulse 4s ease-in-out infinite;
 }
 
+/* Chest and shoulders rise from the waist; the seat stays on the floor */
 @keyframes sleepBreath {
     0%, 100% {
-        transform: translateY(0) scale(1);
+        transform: scaleY(1);
     }
-    50% {
-        transform: translateY(-8px) scale(1.02, 1.01);
-    }
-}
-
-@keyframes shadowPulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scale(1.08);
-        opacity: 0.35;
+    45% {
+        transform: scaleY(1.03);
     }
 }
 
+/* Squash, then stretch up, still sitting */
 @keyframes wakeJolt {
-    0% { transform: scale(0.92); }
-    50% { transform: scale(1.08) translateY(-14px); }
-    100% { transform: scale(1) translateY(0); }
+    0% { transform: scaleY(0.93); }
+    45% { transform: scaleY(1.07); }
+    100% { transform: scaleY(1); }
 }
 
 /* Speech Bubble Message (pops up when loud) */

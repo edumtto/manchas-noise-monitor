@@ -24,6 +24,9 @@
     const MASCOT_DEFAULT_SPOT = { x: 0.3, z: 3.0 }; // front half of the rug; a `MascotSpot` object in the model overrides it
     // Pose images share a 944x1126 canvas; the character spans rows 19-1087
     const MASCOT_IMAGE = { width: 944, height: 1126, top: 19, bottom: 1087 };
+    // Bottom of the shirt, as a fraction of his height from the floor (the flat mascot's
+    // --mascot-waist line). Breathing stretches him above it; below it he stays planted.
+    const MASCOT_WAIST = 0.34;
     // Where the Zzz start, as a fraction of the image (matches the flat layout's offset)
     const MASCOT_ZZZ_POINT = { u: 0.62, v: 0.45 };
     // The camera is framed so the 3D Manchas covers the same part of the screen as the
@@ -292,14 +295,15 @@
         else anchor.position.set(MASCOT_DEFAULT_SPOT.x, 0, MASCOT_DEFAULT_SPOT.z);
         scene.add(anchor);
 
-        // Plane with its origin at the character's feet
-        const geometry = new THREE.PlaneGeometry(imgW, imgH);
+        // Plane with its origin at the character's feet, in rows so it can bend
+        const geometry = new THREE.PlaneGeometry(imgW, imgH, 1, 40);
         geometry.translate(0, imgH / 2 - footY, 0);
         const material = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.05 });
         const figure = new THREE.Mesh(geometry, material);
         figure.castShadow = true;
         figure.visible = false; // until the first pose image has loaded
         figure.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaTest: 0.5 });
+        const body = bendBody(material, figure.customDepthMaterial);
         anchor.add(figure);
 
         // Soft contact shadow on the floor
@@ -324,7 +328,7 @@
 
         const loader = new THREE.TextureLoader();
         const textures = new Map();
-        const mascot = { img, zzz, anchor, figure, jolt: -1, src: null, sleeping: false, imgW, imgH, footY };
+        const mascot = { img, zzz, anchor, figure, body, jolt: -1, src: null, sleeping: false, imgW, imgH, footY };
 
         function sync() {
             const src = img.getAttribute('src');
@@ -355,7 +359,34 @@
         return mascot;
     }
 
+    // Breathing without lifting off the floor: the cutout stretches up from the waist
+    // (uStretch), the chest widens (uWiden) and the head trails a little (uHeadLift).
+    // Applied to the figure and to its shadow so both bend the same way.
+    function bendBody(...materials) {
+        const uniforms = {
+            uStretch: { value: 0 },
+            uWiden: { value: 0 },
+            uHeadLift: { value: 0 },
+        };
+        const bend = `
+            float h = position.y / ${MASCOT_HEIGHT.toFixed(3)};
+            float chest = smoothstep(${MASCOT_WAIST.toFixed(3)}, 0.45, h) * (1.0 - smoothstep(0.55, 0.68, h));
+            transformed.x *= 1.0 + uWiden * chest;
+            transformed.y += uStretch * max(h - ${MASCOT_WAIST.toFixed(3)}, 0.0) * ${MASCOT_HEIGHT.toFixed(3)};
+            transformed.y += uHeadLift * smoothstep(0.6, 0.72, h);
+        `;
+        materials.forEach((material) => {
+            material.onBeforeCompile = (shader) => {
+                Object.assign(shader.uniforms, uniforms);
+                shader.vertexShader = 'uniform float uStretch;\nuniform float uWiden;\nuniform float uHeadLift;\n'
+                    + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + bend);
+            };
+        });
+        return uniforms;
+    }
+
     const lerp = (a, b, f) => a + (b - a) * f;
+    const breath = (t) => (1 - Math.cos((t * Math.PI * 2) / 4)) / 2; // 0..1 over a 4s breath
 
     function updateMascot(t, motion) {
         const m = world.mascot;
@@ -363,23 +394,25 @@
         // Turn to face the camera around the vertical axis only, so the feet stay planted
         m.figure.rotation.y = Math.atan2(camera.position.x - m.anchor.position.x, camera.position.z - m.anchor.position.z);
 
-        // Same motion as the flat mascot's sleepBreath / wakeJolt CSS animations
-        let sx = 1;
-        let sy = 1;
-        let lift = 0;
+        // Same motion as the flat mascot's sleepBreath / wakeJolt CSS animations, plus a
+        // slightly wider chest on each breath and a head that trails the body
+        let stretch = 0;
+        let widen = 0;
+        let headLift = 0;
         const joltT = (t - m.jolt) / 0.5;
         if (motion && joltT >= 0 && joltT < 1) {
-            const s = joltT < 0.5 ? lerp(0.92, 1.08, joltT * 2) : lerp(1.08, 1, joltT * 2 - 1);
-            sx = sy = s;
-            lift = joltT < 0.5 ? lerp(0, 0.035, joltT * 2) : lerp(0.035, 0, joltT * 2 - 1);
+            // Squash, then stretch up, still sitting
+            stretch = joltT < 0.45 ? lerp(-0.07, 0.07, joltT / 0.45) : lerp(0.07, 0, (joltT - 0.45) / 0.55);
+            widen = -0.5 * stretch;
         } else if (motion && m.sleeping) {
-            const b = (1 - Math.cos((t * Math.PI * 2) / 4)) / 2;
-            sx = 1 + 0.02 * b;
-            sy = 1 + 0.01 * b;
-            lift = 0.02 * b * MASCOT_HEIGHT;
+            const b = breath(t);
+            stretch = 0.03 * b;
+            widen = 0.02 * b;
+            headLift = 0.012 * MASCOT_HEIGHT * (breath(t - 0.35) - b);
         }
-        m.figure.scale.set(sx, sy, 1);
-        m.figure.position.y = lift;
+        m.body.uStretch.value = stretch;
+        m.body.uWiden.value = widen;
+        m.body.uHeadLift.value = headLift;
 
         // Float the page's Zzz from the 3D mascot's head, scaled to its on-screen size
         m.figure.updateMatrixWorld();
@@ -404,7 +437,7 @@
         const img = world.mascot.img;
         const imgHeight = img.offsetHeight; // layout size, ignoring the breathing animation
         if (!imgHeight || !hostRect.height) return DEFAULT_FLAT_MASCOT;
-        // The image is the first thing in .mascot-container, so they share a top edge
+        // The image fills .mascot-figure, so they share a top edge
         const imgTop = img.parentElement.getBoundingClientRect().top - hostRect.top;
         return {
             top: (imgTop + imgHeight * MASCOT_IMAGE.top / MASCOT_IMAGE.height) / hostRect.height,

@@ -47,6 +47,7 @@ class NoiseMonitor {
         this.isMusicPlaying = false;
 
         this.mascot = document.getElementById('mascot');
+        this.mascotLegs = document.getElementById('mascotLegs');
         this.sleepAnimation = document.getElementById('sleepAnimation');
         this.fullscreenContainer = document.getElementById('fullscreenContainer');
         this.message = document.getElementById('message');
@@ -486,10 +487,16 @@ class NoiseMonitor {
         this.volumeStatusDot.classList.add(zone);
     }
 
+    // The mascot is drawn as two layers (upper body and legs) of the same pose image
+    setMascotImage(src) {
+        this.mascot.src = src;
+        this.mascotLegs.src = src;
+    }
+
     setNoisy() {
         this.isQuiet = false;
         this.mascot.className = 'mascot awake';
-        this.mascot.src = MASCOT_IMAGES.awake;
+        this.setMascotImage(MASCOT_IMAGES.awake);
         this.fullscreenContainer.classList.add('noisy');
         this.message.textContent = this.getRandomMessage(this.noisyMessages);
         this.message.className = 'message';
@@ -504,7 +511,7 @@ class NoiseMonitor {
     setQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
-        this.mascot.src = MASCOT_IMAGES.sleeping;
+        this.setMascotImage(MASCOT_IMAGES.sleeping);
         this.fullscreenContainer.classList.remove('noisy');
         this.message.className = 'message quiet';
         this.sleepAnimation.style.opacity = 1;
@@ -516,7 +523,7 @@ class NoiseMonitor {
     resetToQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
-        this.mascot.src = MASCOT_IMAGES.sleeping;
+        this.setMascotImage(MASCOT_IMAGES.sleeping);
         this.fullscreenContainer.classList.remove('noisy');
         this.message.textContent = "Click 'Start' to begin!";
         this.message.className = 'message quiet';
