@@ -8,13 +8,18 @@ const TRACKS = {
     'piano-1': { name: 'Soft Piano Reverie', src: 'music/piano-reverie.mp3' },
 };
 
+// Every scenario has a 2D image in backgrounds/2D. Those with a 3D model in
+// backgrounds/3D are the choices when the "3D scenes" switch is on; their 2D image
+// is the menu preview and stays behind the 3D canvas while it loads or can't render.
 const BACKGROUNDS = {
-    'chalkboard': { name: 'Chalkboard', src: 'background-c.svg' },
-    'classroom': { name: 'Classroom', src: 'background-b.png' },
-    'forest': { name: 'Forest', src: 'background-a.jpg' },
+    'classroom': { name: 'Classroom', image: 'backgrounds/2D/classroom.jpg', model: 'backgrounds/3D/classroom.glb' },
+    'forest': { name: 'Forest', image: 'backgrounds/2D/forest.jpg' },
 };
-const DEFAULT_BACKGROUND = 'chalkboard';
+const DEFAULT_BACKGROUND = 'classroom';
 const BACKGROUND_STORAGE_KEY = 'manchas-background';
+const DEFAULT_SCENE_3D = 'classroom';
+const SCENE_3D_STORAGE_KEY = 'manchas-scene-3d';
+const MODE_3D_STORAGE_KEY = 'manchas-3d-mode';
 
 class NoiseMonitor {
     constructor() {
@@ -60,6 +65,7 @@ class NoiseMonitor {
         this.countdownDurationRow = document.getElementById('countdownDurationRow');
         this.countdownMinutes = document.getElementById('countdownMinutes');
         this.backgroundOptions = document.getElementById('backgroundOptions');
+        this.scene3dToggle = document.getElementById('scene3dToggle');
 
         // Controls toggle elements
         this.controlsToggleBtn = document.getElementById('controlsToggleBtn');
@@ -78,6 +84,8 @@ class NoiseMonitor {
         ];
 
         this.buildVolumeMeter();
+        this.is3DMode = this.loadSaved(MODE_3D_STORAGE_KEY, ['on', 'off'], 'off') === 'on';
+        this.scene3dToggle.checked = this.is3DMode;
         this.buildBackgroundOptions();
         this.setBackground(this.loadSavedBackground());
         this.setupEventListeners();
@@ -99,13 +107,13 @@ class NoiseMonitor {
     buildBackgroundOptions() {
         this.backgroundButtons = {};
         this.backgroundOptions.innerHTML = '';
-        Object.entries(BACKGROUNDS).forEach(([id, bg]) => {
+        Object.entries(this.backgroundChoices()).forEach(([id, bg]) => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'background-option';
             btn.title = bg.name;
             btn.setAttribute('aria-pressed', 'false');
-            btn.style.backgroundImage = `url('${bg.src}')`;
+            btn.style.backgroundImage = `url('${bg.image}')`;
 
             const label = document.createElement('span');
             label.className = 'background-option-name';
@@ -118,19 +126,51 @@ class NoiseMonitor {
         });
     }
 
-    loadSavedBackground() {
+    // All scenarios, or only those with a 3D model when 3D mode is on
+    backgroundChoices() {
+        if (!this.is3DMode) return BACKGROUNDS;
+        return Object.fromEntries(Object.entries(BACKGROUNDS).filter(([, bg]) => bg.model));
+    }
+
+    backgroundStorageKey() {
+        return this.is3DMode ? SCENE_3D_STORAGE_KEY : BACKGROUND_STORAGE_KEY;
+    }
+
+    loadSaved(key, allowed, fallback) {
         try {
-            const saved = localStorage.getItem(BACKGROUND_STORAGE_KEY);
-            if (saved && BACKGROUNDS[saved]) return saved;
+            const saved = localStorage.getItem(key);
+            if (saved && allowed.includes(saved)) return saved;
         } catch (e) {}
-        return DEFAULT_BACKGROUND;
+        return fallback;
+    }
+
+    loadSavedBackground() {
+        const choices = Object.keys(this.backgroundChoices());
+        return this.loadSaved(this.backgroundStorageKey(), choices, this.is3DMode ? DEFAULT_SCENE_3D : DEFAULT_BACKGROUND);
+    }
+
+    set3DMode(enabled) {
+        this.is3DMode = enabled;
+        try {
+            localStorage.setItem(MODE_3D_STORAGE_KEY, enabled ? 'on' : 'off');
+        } catch (e) {}
+        this.buildBackgroundOptions();
+        this.setBackground(this.loadSavedBackground());
     }
 
     setBackground(backgroundId) {
-        const bg = BACKGROUNDS[backgroundId];
+        const bg = this.backgroundChoices()[backgroundId];
         if (!bg) return;
 
-        this.fullscreenContainer.style.backgroundImage = `url('${bg.src}')`;
+        // In 3D mode the flat image stays underneath as a placeholder/fallback for the scene
+        this.fullscreenContainer.style.backgroundImage = `url('${bg.image}')`;
+        if (window.Classroom3D) {
+            if (this.is3DMode) {
+                window.Classroom3D.start(this.fullscreenContainer, bg.model);
+            } else {
+                window.Classroom3D.stop();
+            }
+        }
         Object.entries(this.backgroundButtons).forEach(([id, btn]) => {
             const isSelected = id === backgroundId;
             btn.classList.toggle('selected', isSelected);
@@ -138,7 +178,7 @@ class NoiseMonitor {
         });
 
         try {
-            localStorage.setItem(BACKGROUND_STORAGE_KEY, backgroundId);
+            localStorage.setItem(this.backgroundStorageKey(), backgroundId);
         } catch (e) {}
     }
 
@@ -253,6 +293,11 @@ class NoiseMonitor {
             if (this.musicAudio.src) {
                 this.musicStatus.textContent = "Track unavailable in /music folder";
             }
+        });
+
+        // 3D scenes toggle
+        this.scene3dToggle.addEventListener('change', (e) => {
+            this.set3DMode(e.target.checked);
         });
 
         // Timer visibility toggle

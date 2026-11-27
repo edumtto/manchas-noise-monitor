@@ -21,9 +21,40 @@ body, html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #325c1c url('background-c.svg') center center no-repeat;
+    background: #325c1c url('backgrounds/2D/classroom.jpg') center center no-repeat;
     background-size: cover;
     transition: filter 0.5s ease;
+}
+
+.scene-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+.scene-canvas.visible {
+    opacity: 1;
+}
+
+/* With the 3D classroom showing, Manchas is drawn inside the scene instead */
+.mascot-container {
+    transition: opacity 0.8s ease;
+}
+
+.scene-3d-active .mascot-container {
+    opacity: 0;
+}
+
+/* classroom3d.js positions the Zzz at the 3D mascot's head */
+.scene-3d-active .sleep-animation-container {
+    top: 0;
+    left: 0;
+    transform-origin: 0 100%;
 }
 
 .fullscreen-container.ghost {
