@@ -26,8 +26,12 @@
     const MASCOT_IMAGE = { width: 944, height: 1126, top: 19, bottom: 1087 };
     // Where the Zzz start, as a fraction of the image (matches the flat layout's offset)
     const MASCOT_ZZZ_POINT = { u: 0.62, v: 0.45 };
-    // Height of the flat mascot as a fraction of the screen; the Zzz are sized for it
-    const FLAT_MASCOT_SCREEN_HEIGHT = 0.54;
+    // The camera is framed so the 3D Manchas covers the same part of the screen as the
+    // flat 2D one (measured from the hidden flat mascot, so it adapts to any screen size)
+    const CAMERA_FOV = 60; // wide enough to keep the room in view with the camera close to him
+    const CAMERA_HEIGHT = 0.65; // metres, about his eye level, so the view takes in the wall above him
+    // The flat character's usual share of the screen, if it can't be measured
+    const DEFAULT_FLAT_MASCOT = { top: 0.31, height: 0.51 };
 
     let threeLoading = null;
     let canvas = null;
@@ -41,6 +45,7 @@
     let host = null;
     let currentModel = null; // model the scene was built from
     let requestedModel = null; // latest model asked for by start()
+    let framing = null; // camera rest position, look-at target and distance to Manchas
     const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -342,6 +347,7 @@
             material.needsUpdate = true;
             figure.customDepthMaterial.needsUpdate = true;
         }
+        img.addEventListener('load', resize); // the flat mascot's size sets the camera framing
         mascot.observer = new MutationObserver(sync);
         mascot.observer.observe(img, { attributes: true, attributeFilter: ['src', 'class'] });
         mascot.sleeping = null;
@@ -385,29 +391,64 @@
         const head = toScreen((MASCOT_ZZZ_POINT.u - 0.5) * m.imgW, (1 - MASCOT_ZZZ_POINT.v) * m.imgH - m.footY);
         const top = toScreen(0, MASCOT_HEIGHT);
         const feet = toScreen(0, 0);
-        const scale = (feet.y - top.y) / (FLAT_MASCOT_SCREEN_HEIGHT * rect.height);
+        const scale = (feet.y - top.y) / framing.flatHeightPx;
         const box = m.zzz.offsetHeight;
         m.zzz.style.transform = `translate(${head.x}px, ${head.y - box}px) scale(${scale})`;
     }
 
     // ---------- Runtime ----------
 
-    const CAMERA_BASE = { x: 0.35, y: 2.0, z: 8.4 };
-    const CAMERA_TARGET = { x: 0.45, y: 1.5, z: 0 };
-    const BASE_FOV = 40;
-    const MIN_HALF_WIDTH = 3.8; // keep the chalkboard in view on narrow screens
+    // Where the flat mascot's character (not its image padding) sits, as fractions of the screen
+    function flatMascotBox() {
+        const hostRect = host.getBoundingClientRect();
+        const img = world.mascot.img;
+        const imgHeight = img.offsetHeight; // layout size, ignoring the breathing animation
+        if (!imgHeight || !hostRect.height) return DEFAULT_FLAT_MASCOT;
+        // The image is the first thing in .mascot-container, so they share a top edge
+        const imgTop = img.parentElement.getBoundingClientRect().top - hostRect.top;
+        return {
+            top: (imgTop + imgHeight * MASCOT_IMAGE.top / MASCOT_IMAGE.height) / hostRect.height,
+            height: imgHeight * (MASCOT_IMAGE.bottom - MASCOT_IMAGE.top) / MASCOT_IMAGE.height / hostRect.height,
+        };
+    }
+
+    // Put the camera in front of Manchas at the distance and aim that make him cover the
+    // flat mascot's box. Refined over a few passes because the camera looks down at him.
+    function frameCamera() {
+        const flat = flatMascotBox();
+        const spot = world.mascot.anchor.position;
+        const head = new THREE.Vector3(spot.x, MASCOT_HEIGHT, spot.z);
+        const feet = new THREE.Vector3(spot.x, 0, spot.z);
+        const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        let dist = MASCOT_HEIGHT / (flat.height * 2 * tanHalfFov);
+        let targetY = MASCOT_HEIGHT / 2;
+        for (let i = 0; i < 8; i++) {
+            camera.position.set(spot.x, CAMERA_HEIGHT, spot.z + dist);
+            camera.lookAt(spot.x, targetY, spot.z);
+            camera.updateMatrixWorld();
+            const top = (1 - head.clone().project(camera).y) / 2;
+            const bottom = (1 - feet.clone().project(camera).y) / 2;
+            dist *= (bottom - top) / flat.height;
+            // Too low on screen means aiming lower, which lifts him up
+            targetY -= ((top + bottom) / 2 - (flat.top + flat.height / 2)) * 2 * dist * tanHalfFov;
+        }
+        framing = {
+            position: camera.position.clone(),
+            target: new THREE.Vector3(spot.x, targetY, spot.z),
+            dist,
+            flatHeightPx: flat.height * host.getBoundingClientRect().height,
+        };
+    }
 
     function resize() {
         if (!renderer || !canvas) return;
         const w = canvas.clientWidth || window.innerWidth;
         const h = canvas.clientHeight || window.innerHeight;
         renderer.setSize(w, h, false);
-        const aspect = w / h;
-        const dist = CAMERA_BASE.z - CAMERA_TARGET.z;
-        const neededFov = (2 * Math.atan(MIN_HALF_WIDTH / dist / aspect) * 180) / Math.PI;
-        camera.aspect = aspect;
-        camera.fov = Math.min(70, Math.max(BASE_FOV, neededFov));
+        camera.aspect = w / h;
+        camera.fov = CAMERA_FOV;
         camera.updateProjectionMatrix();
+        if (world) frameCamera();
     }
 
     function tick(now) {
@@ -419,12 +460,14 @@
         const motion = reducedMotion ? 0 : 1;
         pointer.x += (pointer.tx - pointer.x) * 0.03;
         pointer.y += (pointer.ty - pointer.y) * 0.03;
+        // Gentle drift and pointer parallax, scaled to how close the camera is
+        const sway = motion * framing.dist;
         camera.position.set(
-            CAMERA_BASE.x + motion * (Math.sin(t * 0.07) * 0.25 + pointer.x * 0.35),
-            CAMERA_BASE.y + motion * (Math.sin(t * 0.11) * 0.05 - pointer.y * 0.15),
-            CAMERA_BASE.z
+            framing.position.x + sway * (Math.sin(t * 0.07) * 0.03 + pointer.x * 0.04),
+            framing.position.y + sway * (Math.sin(t * 0.11) * 0.006 - pointer.y * 0.018),
+            framing.position.z
         );
-        camera.lookAt(CAMERA_TARGET.x, CAMERA_TARGET.y, CAMERA_TARGET.z);
+        camera.lookAt(framing.target);
 
         if (motion) {
             world.lamps.forEach(({ pivot, base, phase }) => {
@@ -459,7 +502,7 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        camera = new THREE.PerspectiveCamera(BASE_FOV, 16 / 9, 0.1, 60);
+        camera = new THREE.PerspectiveCamera(CAMERA_FOV, 16 / 9, 0.1, 60);
 
         window.addEventListener('resize', resize);
         window.addEventListener('pointermove', (e) => {
