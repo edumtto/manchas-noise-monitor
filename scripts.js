@@ -21,6 +21,11 @@ const DEFAULT_SCENE_3D = 'classroom';
 const SCENE_3D_STORAGE_KEY = 'manchas-scene-3d';
 const MODE_3D_STORAGE_KEY = 'manchas-3d-mode';
 
+const MASCOT_IMAGES = {
+    sleeping: 'characters/manchas/sleeping.png',
+    awake: 'characters/manchas/awakening.png',
+};
+
 class NoiseMonitor {
     constructor() {
         this.audioContext = null;
@@ -484,7 +489,7 @@ class NoiseMonitor {
     setNoisy() {
         this.isQuiet = false;
         this.mascot.className = 'mascot awake';
-        this.mascot.src = 'awakening.png';
+        this.mascot.src = MASCOT_IMAGES.awake;
         this.fullscreenContainer.classList.add('noisy');
         this.message.textContent = this.getRandomMessage(this.noisyMessages);
         this.message.className = 'message';
@@ -499,7 +504,7 @@ class NoiseMonitor {
     setQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
-        this.mascot.src = 'sleeping.png';
+        this.mascot.src = MASCOT_IMAGES.sleeping;
         this.fullscreenContainer.classList.remove('noisy');
         this.message.className = 'message quiet';
         this.sleepAnimation.style.opacity = 1;
@@ -511,7 +516,7 @@ class NoiseMonitor {
     resetToQuiet() {
         this.isQuiet = true;
         this.mascot.className = 'mascot sleeping';
-        this.mascot.src = 'sleeping.png';
+        this.mascot.src = MASCOT_IMAGES.sleeping;
         this.fullscreenContainer.classList.remove('noisy');
         this.message.textContent = "Click 'Start' to begin!";
         this.message.className = 'message quiet';
